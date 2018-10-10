@@ -75,7 +75,8 @@ public class HTTP2Connection {
     private synchronized void sendMutExc(String method, HeadersFrame headersFrame, FuturePromise<Stream> streamPromise,
                                          HTTP2StreamHandler http2StreamHandler, RequestBody requestBody) throws Exception {
         session.newStream(headersFrame, streamPromise, http2StreamHandler);
-        if (HTTPConstants.POST.equals(method)) {
+        if ((HTTPConstants.POST.equals(method)) || (HTTPConstants.PUT.equals(method)) ||
+        		(HTTPConstants.PATCH.equals(method)) || (HTTPConstants.DELETE.equals(method))) {
             Stream actualStream = streamPromise.get();
             int streamID = actualStream.getId();
             DataFrame data = new DataFrame(streamID, ByteBuffer.wrap(requestBody.getPayloadBytes()), true);
@@ -110,6 +111,22 @@ public class HTTP2Connection {
                         headers);
                 endOfStream = false;
                 break;
+            case "PUT":
+                metaData = new MetaData.Request("PUT", new HttpURI(url.toString()), HttpVersion.HTTP_2,
+                        headers);
+                endOfStream = false;
+                break;
+            case "PATCH":
+                metaData = new MetaData.Request("PATCH", new HttpURI(url.toString()), HttpVersion.HTTP_2,
+                        headers);
+                endOfStream = false;
+                break;
+            case "DELETE":
+                metaData = new MetaData.Request("DELETE", new HttpURI(url.toString()), HttpVersion.HTTP_2,
+                        headers);
+                endOfStream = true;
+                break;
+
             default:
                 break;
         }
@@ -174,6 +191,7 @@ public class HTTP2Connection {
         while (!streamHandlers.isEmpty()) {
             HTTP2StreamHandler h = streamHandlers.poll();
             results.add(h.getHTTP2SampleResult());
+            LOG.warn("PCP: Waiting for Response ");
             try {
                 // wait to receive all the response of the request
                 h.getCompletedFuture().get(h.getTimeout(), TimeUnit.MILLISECONDS);

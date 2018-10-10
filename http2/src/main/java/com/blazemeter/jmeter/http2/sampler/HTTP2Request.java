@@ -56,7 +56,7 @@ public class HTTP2Request extends AbstractSampler implements ThreadListener, Loo
   private static final String CACHE_MANAGER = "HTTP2Request.cache_manager"; // $NON-NLS-1$
   private static final String HTTP_PREFIX = HTTPConstants.PROTOCOL_HTTP + "://"; // $NON-NLS-1$
   private static final String HTTPS_PREFIX = HTTPConstants.PROTOCOL_HTTPS + "://"; // $NON-NLS-1$
-  private static final String DEFAULT_PROTOCOL = HTTPConstants.PROTOCOL_HTTPS;
+  private static final String DEFAULT_PROTOCOL = HTTPConstants.PROTOCOL_HTTP;
   /**
    * A number to indicate that the port has not been set.
    */
@@ -194,7 +194,7 @@ public class HTTP2Request extends AbstractSampler implements ThreadListener, Loo
         timeout = Integer.parseInt(getResponseTimeout());
       }
       RequestBody body = null;
-      if (HTTPConstants.POST.equals(method) || HTTPConstants.PUT.equals(method)) {
+      if (HTTPConstants.POST.equals(method) || HTTPConstants.PUT.equals(method)||HTTPConstants.PATCH.equals(method)) {
         body = RequestBody
             .from(method, getContentEncoding(), getArguments(), getSendParameterValuesAsPostBody());
       }
@@ -274,7 +274,7 @@ public class HTTP2Request extends AbstractSampler implements ThreadListener, Loo
       }
     } else {
       //TODO handle no SSL connection
-      http2Connection = new HTTP2Connection(connectionId, true);
+      http2Connection = new HTTP2Connection(connectionId, false);
       http2Connection.connect(host, port);
       threadConnections.put(connectionId, http2Connection);
     }
@@ -384,11 +384,11 @@ public class HTTP2Request extends AbstractSampler implements ThreadListener, Loo
   }
 
   public String getProtocol() {
-    String protocol = getPropertyAsString(PROTOCOL_SCHEME);
-    if (protocol == null || protocol.length() == 0) {
+    //String protocol = getPropertyAsString(PROTOCOL_SCHEME);
+    //if (protocol == null || protocol.length() == 0) {
       return DEFAULT_PROTOCOL;
-    }
-    return protocol;
+    //}
+    //return protocol;
   }
 
   /**

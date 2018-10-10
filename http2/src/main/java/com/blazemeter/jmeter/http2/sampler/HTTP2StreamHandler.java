@@ -147,6 +147,7 @@ public class HTTP2StreamHandler extends Stream.Listener.Adapter {
 
     MetaData.Response responseMetadata = ((MetaData.Response) frame.getMetaData());
     result.setResponseCode(Integer.toString(responseMetadata.getStatus()));
+    LOG.info("TEST: onHeaders: " + responseMetadata.getStatus() + "frame.isEndStream() " + frame.isEndStream());
     result.setResponseMessage(responseMetadata.getReason());
     for (HttpField h : frame.getMetaData().getFields()) {
       switch (h.getName()) {
@@ -172,6 +173,33 @@ public class HTTP2StreamHandler extends Stream.Listener.Adapter {
     result.setResponseHeaders(responseHeaders);
     result.setHeadersSize(rawHeaders.length());
     result.setHttpFieldsResponse(frame.getMetaData().getFields());
+    if (frame.isEndStream()) {
+    	try {
+    
+    	result.setSuccessful(isSuccessCode(Integer.parseInt(result.getResponseCode())));
+        result.setResponseData(this.responseBytes);
+        if (result.isRedirect()) {
+          // TODO redirect
+        }
+
+        if ((result.isEmbebedResults()) && (result.getEmbebedResultsDepth() > 0)
+            && (result.getDataType().equals(SampleResult.TEXT))) {
+          getPageResources(result);
+        }
+
+        if (result.isSecondaryRequest()) {
+          HTTP2SampleResult parent = (HTTP2SampleResult) result.getParent();
+          // set primary request failed if at least one secondary
+          // request fail
+          setParentSampleSuccess(parent,
+              parent.isSuccessful() && (result == null || result.isSuccessful()));
+        }
+    	} catch  (Exception e) {
+            e.printStackTrace(); // TODO
+            LOG.debug("TEST : onHeaders : In exception for data handling...");
+        }
+    	completeStream();
+    }
   }
 
   @Override
